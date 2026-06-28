@@ -95,6 +95,15 @@ src/
 
 Linked from the [Phone Store API case study](https://github.com/zacharyahutton/portfolio). The case study mentions MongoDB, refresh tokens, and HMAC order webhooks; **this repo uses in-memory data** so you can run it with zero external services.
 
+## VS Code
+
+1. **File → Open Folder** and select this repository root.
+2. Install recommended extensions when prompted (Python or Node/Java packs).
+3. **Run and Debug** (`F5`): choose **npm run dev depending on the repo.
+4. **Terminal → Run Task**: `dev: uvicorn`, `npm: dev`, or `mvn: test`.
+
+Workspace settings live in `.vscode/` (`extensions.json`, `launch.json`, `tasks.json`, `settings.json`).
+
 ## Future improvements
 
 - MongoDB persistence and atomic inventory updates

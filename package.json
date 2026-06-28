@@ -1,11 +1,13 @@
 {
   "name": "phone-store-api",
   "version": "0.1.0",
-  "description": "Portfolio demonstration — phone retail REST API starter",
+  "description": "Portfolio demonstration \u2014 phone retail REST API starter",
   "type": "module",
   "scripts": {
     "dev": "node --watch src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "test": "node --test tests/api.test.js",
+    "demo": "node scripts/demo.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -13,5 +15,8 @@
     "express-rate-limit": "^7.4.0",
     "jsonwebtoken": "^9.0.2"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "supertest": "^7.0.0"
+  }
 }

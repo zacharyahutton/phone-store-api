@@ -1,9 +1,11 @@
-﻿import bcrypt from "bcryptjs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+import bcrypt from "bcryptjs";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import jwt from "jsonwebtoken";
 
-const app = express();
+export const app = express();
 app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET ?? "portfolio-demo";
@@ -120,4 +122,11 @@ app.post("/webhooks/register", auth, (req, res) => {
 });
 
 const port = Number(process.env.PORT ?? 4000);
-app.listen(port, () => console.log(`phone-store-api listening on :${port}`));
+const isDirectRun =
+  process.argv[1] &&
+  pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url;
+
+if (isDirectRun) {
+  app.listen(port, () => console.log(`phone-store-api listening on :${port}`));
+}
+
