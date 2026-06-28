@@ -1,4 +1,4 @@
-import bcrypt from "bcryptjs";
+﻿import bcrypt from "bcryptjs";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import jwt from "jsonwebtoken";
@@ -9,6 +9,7 @@ app.use(express.json());
 const JWT_SECRET = process.env.JWT_SECRET ?? "portfolio-demo";
 const users = new Map();
 const carts = new Map();
+const orders = [];
 let webhookUrl = null;
 
 const products = [
@@ -37,8 +38,12 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", service: "phone-store-api" });
 });
 
-app.get("/products", (_req, res) => {
-  res.json({ data: products, page: 1 });
+app.get("/products", (req, res) => {
+  const page = Math.max(1, Number(req.query.page ?? 1));
+  const pageSize = Math.min(50, Number(req.query.pageSize ?? 10));
+  const start = (page - 1) * pageSize;
+  const slice = products.slice(start, start + pageSize);
+  res.json({ data: slice, page, pageSize, total: products.length });
 });
 
 app.post("/auth/register", async (req, res) => {
@@ -60,14 +65,53 @@ app.post("/auth/login", async (req, res) => {
   res.json({ access_token: token, token_type: "bearer" });
 });
 
+app.get("/cart", auth, (req, res) => {
+  res.json({ cart: carts.get(req.user.sub) ?? [] });
+});
+
 app.post("/cart/items", auth, (req, res) => {
   const { productId, qty = 1 } = req.body ?? {};
   const product = products.find((p) => p.id === productId);
   if (!product) return res.status(404).json({ error: "Product not found" });
   const cart = carts.get(req.user.sub) ?? [];
-  cart.push({ productId, qty });
+  const existing = cart.find((line) => line.productId === productId);
+  if (existing) existing.qty += qty;
+  else cart.push({ productId, qty });
   carts.set(req.user.sub, cart);
   res.status(201).json({ cart });
+});
+
+app.post("/checkout", auth, (req, res) => {
+  const email = req.user.sub;
+  const cart = carts.get(email) ?? [];
+  if (cart.length === 0) return res.status(400).json({ error: "Cart is empty" });
+
+  let total = 0;
+  for (const line of cart) {
+    const product = products.find((p) => p.id === line.productId);
+    if (!product || product.stock < line.qty) {
+      return res.status(409).json({ error: "Insufficient stock", productId: line.productId });
+    }
+  }
+
+  for (const line of cart) {
+    const product = products.find((p) => p.id === line.productId);
+    product.stock -= line.qty;
+    total += product.price * line.qty;
+  }
+
+  const order = {
+    id: `ord_${orders.length + 1}`,
+    email,
+    items: [...cart],
+    total,
+    status: "confirmed",
+    createdAt: new Date().toISOString(),
+  };
+  orders.push(order);
+  carts.set(email, []);
+
+  res.status(201).json({ order, message: "Checkout stub complete (no payment processor)" });
 });
 
 app.post("/webhooks/register", auth, (req, res) => {
